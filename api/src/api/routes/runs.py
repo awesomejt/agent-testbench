@@ -55,8 +55,6 @@ def create_run():
                     "score":             data.get("score"),
                     "error":             data.get("error", False),
                     "error_message":     data.get("error_message"),
-                    "pass_fail":         data.get("pass_fail"),
-                    "score":             data.get("score"),
                     "grader_model":      data.get("grader_model"),
                     "grader_rationale":  data.get("grader_rationale"),
                     "suite_run_id":      data.get("suite_run_id"),

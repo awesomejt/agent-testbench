@@ -65,6 +65,8 @@ __pycache__/
 venv/
 env/
 *.egg-info/
+.coverage
+.coverage.*
 
 # Go
 bin/

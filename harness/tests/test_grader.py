@@ -3,7 +3,7 @@
 import json
 from unittest.mock import MagicMock, patch
 
-from src.harness.grader import GradeResult, grade_run, GRADER_MODEL
+from src.harness.grader import grade_run, GRADER_MODEL
 from src.harness.scenario import Scenario
 
 

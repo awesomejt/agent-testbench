@@ -3,9 +3,7 @@
 import textwrap
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from src.harness.runner import RunResult
 from src.harness.suite_runner import run_suite
