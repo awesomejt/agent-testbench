@@ -1,72 +1,69 @@
 # Project TODO
 
-Task list for `{{PROJECT_NAME}}`, organized by ownership and project phase.
+Task list for Agent Testbench, organized by ownership and project phase.
 
 ## Needs Attention
 
-Items here require Jason's input, a decision, credentials, external access, or manual validation before agent work can continue.
+Items here require Jason's input before agent work can continue.
 
-- [ ] Replace all `{{PLACEHOLDER}}` values in project files before starting agent work.
+- [ ] **Harness invocation model** — Research how to drive OpenCode from a shell script for multi-turn scenarios, stall/timeout detection, and process restart on failure. Confirm the approach before implementing `harness/`. See open questions in `MEMORY.md`.
 
 ## Manual Validation
 
-These items need Jason to validate on real systems, live services, devices, accounts, or deployment targets.
-
-- [ ] Confirm requirements and success criteria in `PROJECT_BRIEF.md`.
-- [ ] Confirm chosen stack and deployment target.
-- [ ] Confirm credentials, API keys, and production access are not committed.
-- [ ] Validate deployment or release workflow on the target environment.
+- [ ] Confirm Docker Compose + Traefik TLS setup works on local dev machine
+- [ ] Validate deployment workflow to dev / stage / prod VMs
+- [ ] Confirm credentials and API keys for AI providers are available and not committed
 
 ## AI Agent Work
 
-These items are good candidates for a local model or cloud agent.
-
 ### Discovery
 
-- [ ] Read `PROJECT_BRIEF.md`, `MEMORY.md`, `TODO.md`, `status.yaml`, and relevant docs.
-- [ ] Inventory existing source, tests, configs, and docs.
-- [ ] Identify missing requirements and blockers.
+- [x] **Research: OpenCode harness invocation** — Completed 2026-05-25. Findings in `MEMORY.md` → Harness Design.
+- [ ] Inventory existing source, tests, and configs once scaffolding begins
 
 ### Planning
 
-- [ ] Fill in `docs/Requirements.md`.
-- [ ] Fill in `docs/Tech-Stack.md`.
-- [ ] Fill in or intentionally skip `docs/Architecture.md`.
-- [ ] Update `docs/Implementation.md` with implementation phases.
+- [x] Fill in `docs/Requirements.md`
+- [x] Fill in `docs/Tech-Stack.md`
+- [x] Fill in `docs/Architecture.md`
+- [x] Update `docs/Implementation.md` with implementation phases
+- [ ] Finalize DB schema (run record table, reference tables if needed)
+- [ ] Finalize API route design (POST /runs, GET /runs with filters)
+- [ ] Draft Docker Compose service definitions
 
 ### Implementation
 
-- [ ] Scaffold the chosen project structure.
-- [ ] Implement the highest-priority unblocked feature or fix.
-- [ ] Update public interfaces, schemas, or configuration docs as needed.
+- [ ] Scaffold monorepo structure: `scenarios/`, `api/`, `web/`, `cli/`, `harness/`, `db/`
+- [ ] `db/` — initial schema and migration (run records table)
+- [ ] `api/` — Flask app skeleton + POST /runs endpoint
+- [ ] `cli/` — record a run result and post to API
+- [ ] `harness/` — run one scenario against one agent and invoke CLI
+- [ ] `web/` — React app skeleton + run list view
+- [ ] Docker Compose stack with api, web, db, Traefik
+- [ ] End-to-end smoke test: scenario → harness → CLI → API → DB → web
 
 ### Tests And Quality
 
-- [ ] Add or update unit tests.
-- [ ] Add or update integration/e2e tests where risk justifies it.
-- [ ] Run lint, format check, type check, build, and test commands when available.
-- [ ] Review with `QUALITY_CHECKLIST.md`.
+- [ ] Add unit tests for API route logic
+- [ ] Add integration test for the CLI → API → DB path
+- [ ] Confirm lint, type check, and build pass for all modules
+- [ ] Review with `QUALITY_CHECKLIST.md`
 
 ### Documentation And Deployment
 
-- [ ] Update `README.md` setup and usage instructions.
-- [ ] Document deployment, environment variables, and operational notes.
-- [ ] Record decisions and milestones in `MEMORY.md`.
+- [ ] Document environment variables (DB URL, AI provider keys)
+- [ ] Document Docker Compose startup and teardown
+- [ ] Document dev / stage / prod deployment steps
+- [ ] Update `README.md` with setup and usage instructions
 
 ## In Progress
-
-Move exactly one task here while working if multiple agents may run at the same time.
 
 - [ ]
 
 ## Blocked
 
-Move blocked tasks here with the blocker and the next required human action.
-
 - [ ]
 
 ## Done
 
-Move completed items here with a brief note.
-
-- [ ]
+- [x] Initial project documentation (PROJECT_BRIEF.md, MEMORY.md, TODO.md, docs/, CLAUDE.md) — 2026-05-25
