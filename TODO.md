@@ -7,7 +7,7 @@ Last updated: 2026-05-25
 
 Items here require Jason's input before agent work can continue.
 
-- [ ] **pass_fail / score population** — Who or what determines whether a run passes or fails, and assigns a score? Options: human review via UI, automated assertion in the scenario file, or a post-run grader script. Needs a decision before the harness → CLI path is complete.
+- [x] **pass_fail / score population** — Decided 2026-05-25: a second "judge" cloud model grades each run after it completes. See grading tasks in the Implementation section below.
 - [ ] **AI provider credentials** — Confirm API keys for target providers (Anthropic, OpenAI, local) are available in the test VM environment and how they should be injected (env vars, secrets manager, `.env` file on the VM).
 - [ ] **Prod deployment** — When to promote to prod, and which VM / compose stack receives the prod images.
 
@@ -21,7 +21,14 @@ Items here require Jason's input before agent work can continue.
 
 ### Implementation
 
-- [ ] **Harness → CLI invocation** — After `run_agent_scenario` / `run_model_scenario` completes, serialize the `RunResult` and pipe it to `testbench record --data -` so results reach the API and DB. This is the last unconnected link in the data pipeline.
+- [ ] **Grading: DB migration** — Add `002_add_grading_columns.sql`: `grader_model TEXT`, `grader_rationale TEXT` columns to the `runs` table.
+- [ ] **Grading: `Scenario` dataclass** — Add optional `grading_criteria: str | None` field to `harness/src/harness/scenario.py` and parse it from the YAML front matter.
+- [ ] **Grading: `harness/src/harness/grader.py`** — New module. `grade_run(scenario, agent_output, grader_model, api_key) -> GradeResult` calls `claude-opus-4-7` via the Anthropic API, prompts it with the scenario prompt + criteria + agent output, and parses a structured JSON response: `{pass_fail: pass|fail|partial|error, score: 0–1, rationale: str}`.
+- [ ] **Grading: wire into runner** — After each run in `runner.py`, extract the agent's final text output and call `grade_run`. Attach `pass_fail`, `score`, `grader_model`, and `grader_rationale` to `RunResult`.
+- [ ] **Grading: `RunResult` fields** — Add `pass_fail`, `score`, `grader_model`, `grader_rationale` fields to the `RunResult` dataclass.
+- [ ] **Grading: API + CLI** — Update `POST /runs/` to accept and persist the four new grading fields. CLI `record` command passes them through `--data` already; no CLI changes needed.
+- [ ] **Grading: update example scenario** — Add a `grading_criteria` section to `scenarios/example-hello-world.md` showing the expected format.
+- [ ] **Harness → CLI invocation** — After `run_agent_scenario` / `run_model_scenario` completes (and grading runs), serialize the `RunResult` and pipe it to `testbench record --data -` so results reach the API and DB. This is the last unconnected link in the data pipeline.
 - [ ] **Web: runs list view** — Replace the Vite default scaffold in `web/src/App.tsx` with a paginated table of runs fetched from `GET /runs/`. Columns: run name, scenario, model, provider, total time, tokens/sec, pass/fail, cost, date.
 - [ ] **Web: run detail view** — Clicking a row shows full run details including all token counts, error message if any, and raw event log.
 - [ ] **Web: filter controls** — Wire the `scenario`, `model`, `provider`, `from`, `to` query params from `GET /runs/` into the UI as filter inputs above the runs table.
