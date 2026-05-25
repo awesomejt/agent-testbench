@@ -14,7 +14,7 @@ Agents should update this file after meaningful decisions, milestones, blockers,
 ## Key Decisions
 
 - **CLI → API → DB** (not CLI → DB directly). The API is the single write path for run records, keeping schema migration in one place.
-- **uv** manages Python for api, cli, and harness — all share a Python 3.14 baseline.
+- **uv** manages Python for api and harness — Python 3.14 baseline.
 - **npm** is the web package manager.
 - **Traefik** handles TLS for the web client in all environments (local dev included).
 - **Scenarios are Markdown files** with YAML front matter. The harness discovers them from the filesystem; adding a scenario requires no code change.
@@ -37,7 +37,8 @@ Agents should update this file after meaningful decisions, milestones, blockers,
 
 ## Technical Notes
 
-- Python 3.14, uv, Flask (api, cli, harness)
+- Python 3.14, uv, Flask (api, harness)
+- Go 1.26, Cobra + Viper (cli) — compiles to a single static binary for VM deployment
 - TypeScript, React, Node 24 LTS, Express, npm (web)
 - Postgres 18
 

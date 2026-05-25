@@ -8,7 +8,24 @@ Agent Testbench is a collection of tools for testing and recording AI agents. Th
 
 ## Commands
 
-No source code exists yet. Once the stack is chosen, fill in `docs/Tech-Stack.md` with the actual install, dev, test, and build commands. Until then there are no runnable commands.
+```bash
+# Python modules (api, harness) — run from module directory
+uv sync                        # install dependencies
+uv run pytest                  # run tests
+uv run flask run               # start api dev server (requires .env)
+
+# CLI (Go)
+cd cli && go test ./...        # run tests
+cd cli && go build -o testbench .  # build binary
+
+# Web
+cd web && npm install          # install dependencies
+cd web && npm run dev          # dev server
+cd web && npm run build        # production build
+
+# Full local stack
+docker compose up              # api + web + db + Traefik
+```
 
 ## Project Architecture
 
