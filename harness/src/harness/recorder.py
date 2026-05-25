@@ -21,6 +21,7 @@ def record_run(result: RunResult, run_name: str, api_url: str) -> dict:
         "output_tokens":     result.output_tokens,
         "total_tokens":      result.total_tokens,
         "cost_usd":          result.cost_usd,
+        "output_text":       result.output_text,
         "error":             result.error,
         "pass_fail":         result.pass_fail,
         "score":             result.score,
