@@ -25,14 +25,15 @@ def create_run():
                     run_name, scenario_name, model_name, provider, agent_server,
                     start_datetime, end_datetime, total_time, tokens_per_second,
                     follow_up_prompts, input_tokens, output_tokens, total_tokens,
-                    cost_usd, pass_fail, score, error, error_message,
+                    cost_usd, output_text, pass_fail, score, error, error_message,
                     grader_model, grader_rationale, suite_run_id
                 ) VALUES (
                     %(run_name)s, %(scenario_name)s, %(model_name)s, %(provider)s,
                     %(agent_server)s, %(start_datetime)s, %(end_datetime)s,
                     %(total_time)s, %(tokens_per_second)s, %(follow_up_prompts)s,
                     %(input_tokens)s, %(output_tokens)s, %(total_tokens)s,
-                    %(cost_usd)s, %(pass_fail)s, %(score)s, %(error)s, %(error_message)s,
+                    %(cost_usd)s, %(output_text)s, %(pass_fail)s, %(score)s,
+                    %(error)s, %(error_message)s,
                     %(grader_model)s, %(grader_rationale)s, %(suite_run_id)s
                 ) RETURNING *
                 """,
@@ -51,6 +52,7 @@ def create_run():
                     "output_tokens":     data.get("output_tokens", 0),
                     "total_tokens":      data.get("total_tokens", 0),
                     "cost_usd":          data.get("cost_usd"),
+                    "output_text":       data.get("output_text"),
                     "pass_fail":         data.get("pass_fail"),
                     "score":             data.get("score"),
                     "error":             data.get("error", False),
@@ -63,6 +65,17 @@ def create_run():
             row = cur.fetchone()
 
     return jsonify(_serialize(row)), 201
+
+
+@bp.get("/<int:run_id>")
+def get_run(run_id: int):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM runs WHERE id = %(id)s", {"id": run_id})
+            row = cur.fetchone()
+    if row is None:
+        return jsonify({"error": "not found"}), 404
+    return jsonify(_serialize(row))
 
 
 @bp.get("/")
