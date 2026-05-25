@@ -1,0 +1,12 @@
+[project]
+name = "testbench-integration-tests"
+version = "0.1.0"
+description = "Agent Testbench integration tests — run against a live stack"
+requires-python = ">=3.14"
+dependencies = [
+    "httpx>=0.28.1",
+    "pytest>=9.0.3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["integration"]

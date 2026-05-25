@@ -8,6 +8,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import httpx
+
 from .scenario import Scenario
 
 STALL_TIMEOUT = 90      # seconds of stdout silence
@@ -43,7 +45,7 @@ class RunResult:
         return self.output_tokens / self.total_time
 
 
-def run_agent_scenario(scenario: Scenario, model: str, provider: str) -> RunResult:
+def run_agent_scenario(scenario: Scenario, model: str, provider: str) -> RunResult:  # pragma: no cover
     """Run an agent-type scenario via opencode run --format json."""
     result = RunResult(
         scenario_name=scenario.name,
@@ -68,7 +70,7 @@ def run_agent_scenario(scenario: Scenario, model: str, provider: str) -> RunResu
     return result
 
 
-def _run_opencode_turn(prompt: str, cwd: str, result: RunResult, session_id: str | None) -> str | None:
+def _run_opencode_turn(prompt: str, cwd: str, result: RunResult, session_id: str | None) -> str | None:  # pragma: no cover
     cmd = ["opencode", "run", "--format", "json"]
     if session_id:
         cmd += ["--session", session_id, "--continue"]
@@ -132,8 +134,6 @@ def run_model_scenario(scenario: Scenario, model: str, provider: str,
                        base_url: str, api_key: str | None = None,
                        agent_server: str | None = None) -> RunResult:
     """Run a model-type scenario directly against an OpenAI-compatible API."""
-    import httpx
-
     result = RunResult(
         scenario_name=scenario.name,
         model_name=model,
