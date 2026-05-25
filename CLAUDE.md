@@ -9,22 +9,30 @@ Agent Testbench is a collection of tools for testing and recording AI agents. Th
 ## Commands
 
 ```bash
-# Python modules (api, harness) — run from module directory
-uv sync                        # install dependencies
-uv run pytest                  # run tests
-uv run flask run               # start api dev server (requires .env)
+# Run all tests
+make test
 
-# CLI (Go)
-cd cli && go test ./...        # run tests
-cd cli && go build -o testbench .  # build binary
+# Run tests for a single module
+make test-api
+make test-harness
+make test-cli
 
-# Web
-cd web && npm install          # install dependencies
-cd web && npm run dev          # dev server
-cd web && npm run build        # production build
+# Build CLI binary → cli/builds/testbench
+make build-cli
+
+# Cross-compile CLI for Linux amd64 (deploy target)
+cd cli && make build-linux     # → cli/builds/testbench-linux-amd64
+
+# Lint all modules
+make lint
 
 # Full local stack
-docker compose up              # api + web + db + Traefik
+docker compose up
+
+# Per-module dev (from module directory)
+uv sync && uv run flask run    # api dev server (requires .env)
+uv sync && uv run pytest       # api or harness tests
+npm install && npm run dev     # web dev server
 ```
 
 ## Project Architecture
