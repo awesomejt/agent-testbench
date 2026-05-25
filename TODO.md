@@ -21,17 +21,21 @@ Items here require Jason's input before agent work can continue.
 
 ### Implementation
 
-- [ ] **Grading: DB migration** — Add `002_add_grading_columns.sql`: `grader_model TEXT`, `grader_rationale TEXT` columns to the `runs` table.
-- [ ] **Grading: `Scenario` dataclass** — Add optional `grading_criteria: str | None` field to `harness/src/harness/scenario.py` and parse it from the YAML front matter.
-- [ ] **Grading: `harness/src/harness/grader.py`** — New module. `grade_run(scenario, agent_output, grader_model, api_key) -> GradeResult` calls `claude-opus-4-7` via the Anthropic API, prompts it with the scenario prompt + criteria + agent output, and parses a structured JSON response: `{pass_fail: pass|fail|partial|error, score: 0–1, rationale: str}`.
+- [ ] **DB migration 002: grading columns** — `002_add_grading_columns.sql`: add `grader_model TEXT` and `grader_rationale TEXT` to the `runs` table.
+- [ ] **DB migration 003: suite support** — `003_add_suite_support.sql`: CREATE TABLE `suite_runs` (id, suite_name, run_label, model_name, provider, agent_server, total_scenarios, passed, failed, partial, error_count, avg_score, total_cost_usd, total_time, start_datetime, end_datetime, created_at); ALTER TABLE runs ADD COLUMN `suite_run_id BIGINT REFERENCES suite_runs(id)`.
+- [ ] **`Scenario` dataclass: new fields** — Add `grading_criteria: str | None` and `suites: list[str]` to `harness/src/harness/scenario.py`. Parse `suite:` from front matter as a string or list; parse `grading_criteria:` as a string block.
+- [ ] **Grading: `harness/src/harness/grader.py`** — New module. `grade_run(scenario, agent_output, api_key) -> GradeResult` calls `claude-opus-4-7` via the Anthropic API with the scenario prompt + `grading_criteria` + agent output, and parses structured JSON: `{pass_fail: pass|fail|partial|error, score: 0–1, rationale: str}`.
 - [ ] **Grading: wire into runner** — After each run in `runner.py`, extract the agent's final text output and call `grade_run`. Attach `pass_fail`, `score`, `grader_model`, and `grader_rationale` to `RunResult`.
-- [ ] **Grading: `RunResult` fields** — Add `pass_fail`, `score`, `grader_model`, `grader_rationale` fields to the `RunResult` dataclass.
-- [ ] **Grading: API + CLI** — Update `POST /runs/` to accept and persist the four new grading fields. CLI `record` command passes them through `--data` already; no CLI changes needed.
-- [ ] **Grading: update example scenario** — Add a `grading_criteria` section to `scenarios/example-hello-world.md` showing the expected format.
-- [ ] **Harness → CLI invocation** — After `run_agent_scenario` / `run_model_scenario` completes (and grading runs), serialize the `RunResult` and pipe it to `testbench record --data -` so results reach the API and DB. This is the last unconnected link in the data pipeline.
-- [ ] **Web: runs list view** — Replace the Vite default scaffold in `web/src/App.tsx` with a paginated table of runs fetched from `GET /runs/`. Columns: run name, scenario, model, provider, total time, tokens/sec, pass/fail, cost, date.
-- [ ] **Web: run detail view** — Clicking a row shows full run details including all token counts, error message if any, and raw event log.
-- [ ] **Web: filter controls** — Wire the `scenario`, `model`, `provider`, `from`, `to` query params from `GET /runs/` into the UI as filter inputs above the runs table.
+- [ ] **`RunResult` fields** — Add `pass_fail`, `score`, `grader_model`, `grader_rationale`, and `suite_run_id` fields to the `RunResult` dataclass.
+- [ ] **API: grading + suite fields** — Update `POST /runs/` to accept and persist the new grading and suite fields. Add `POST /suite-runs/` and `GET /suite-runs/` endpoints (create a suite run, list with filters). Add `PUT /suite-runs/{id}/finalize` to compute and store aggregates once all scenario runs are complete.
+- [ ] **Harness: suite runner** — New entry point (e.g., `harness/src/harness/suite_runner.py`) that: creates a `suite_run` via `POST /suite-runs/`, iterates matching scenarios, runs each via the runner, grades each, records each run via CLI, then calls finalize. Accept `--suite <name>` and `--model <name>` flags.
+- [ ] **Harness → CLI invocation** — After each individual run (and grading), serialize the `RunResult` and pipe it to `testbench record --data -`. This is the last unconnected link in the data pipeline.
+- [ ] **CLI: `run-suite` command** — Add a `run-suite` subcommand to the Go CLI that wraps the harness suite runner, passing model/provider/api-url config through.
+- [ ] **Grading: update example scenario** — Add `grading_criteria` and `suite` fields to `scenarios/example-hello-world.md` showing the expected format.
+- [ ] **Web: suite results view** — Primary view listing suite runs (from `GET /suite-runs/`). Columns: suite name, run label, model, pass rate, avg score, total cost, date. Clicking a suite run drills into its individual scenario results.
+- [ ] **Web: runs list view** — Secondary view (or tab) showing individual runs from `GET /runs/`. Columns: scenario, model, provider, total time, tokens/sec, pass/fail, score, cost, date.
+- [ ] **Web: run detail view** — Full run details including all token counts, grader rationale, error message if any, and raw event log.
+- [ ] **Web: filter controls** — Wire `scenario`, `model`, `provider`, `suite`, `from`, `to` query params into filter inputs above each table.
 - [ ] **Harness batch runner** — A top-level entry point (CLI command or script) that iterates over all scenarios in `scenarios/` and runs each against a specified model, collecting results via the harness and recording each via the CLI.
 - [ ] **Local cost calculation** — Implement the `(watts × seconds / 3600) × rate_per_kwh` formula in the harness for `type: model` local runs. Rate defaults to `$0.14`; make it configurable via env var or flag.
 - [ ] **Fix `.coverage` files in git** — `api/.coverage` and `harness/.coverage` were accidentally committed. Remove from tracking (`git rm --cached`) and add to `.gitignore`.
