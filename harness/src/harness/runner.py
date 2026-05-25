@@ -6,6 +6,7 @@ import tempfile
 import threading
 import time
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
@@ -38,6 +39,8 @@ class RunResult:
     grader_model: str | None = None
     grader_rationale: str | None = None
     suite_run_id: int | None = None
+    start_wall: datetime | None = None
+    end_wall: datetime | None = None
     events: list[dict] = field(default_factory=list)
 
     @property
@@ -60,6 +63,7 @@ def run_agent_scenario(scenario: Scenario, model: str, provider: str) -> RunResu
         agent_server=None,
         start_time=time.monotonic(),
         end_time=0.0,
+        start_wall=datetime.now(timezone.utc),
     )
 
     config = {"permission": {"*": "allow"}, "provider": {"model": model}}
@@ -73,6 +77,7 @@ def run_agent_scenario(scenario: Scenario, model: str, provider: str) -> RunResu
             result.error_message = str(exc)
 
     result.end_time = time.monotonic()
+    result.end_wall = datetime.now(timezone.utc)
     return result
 
 
@@ -153,6 +158,7 @@ def run_model_scenario(scenario: Scenario, model: str, provider: str,
         agent_server=agent_server,
         start_time=time.monotonic(),
         end_time=0.0,
+        start_wall=datetime.now(timezone.utc),
     )
 
     headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
@@ -177,4 +183,5 @@ def run_model_scenario(scenario: Scenario, model: str, provider: str,
         result.error_message = str(exc)
 
     result.end_time = time.monotonic()
+    result.end_wall = datetime.now(timezone.utc)
     return result
