@@ -7,6 +7,8 @@ bp = Blueprint("runs", __name__, url_prefix="/runs")
 REQUIRED = {"run_name", "scenario_name", "model_name", "provider",
             "start_datetime", "end_datetime", "total_time"}
 
+GRADING_FIELDS = {"pass_fail", "score", "grader_model", "grader_rationale", "suite_run_id"}
+
 
 @bp.post("/")
 def create_run():
@@ -23,13 +25,15 @@ def create_run():
                     run_name, scenario_name, model_name, provider, agent_server,
                     start_datetime, end_datetime, total_time, tokens_per_second,
                     follow_up_prompts, input_tokens, output_tokens, total_tokens,
-                    cost_usd, pass_fail, score, error, error_message
+                    cost_usd, pass_fail, score, error, error_message,
+                    grader_model, grader_rationale, suite_run_id
                 ) VALUES (
                     %(run_name)s, %(scenario_name)s, %(model_name)s, %(provider)s,
                     %(agent_server)s, %(start_datetime)s, %(end_datetime)s,
                     %(total_time)s, %(tokens_per_second)s, %(follow_up_prompts)s,
                     %(input_tokens)s, %(output_tokens)s, %(total_tokens)s,
-                    %(cost_usd)s, %(pass_fail)s, %(score)s, %(error)s, %(error_message)s
+                    %(cost_usd)s, %(pass_fail)s, %(score)s, %(error)s, %(error_message)s,
+                    %(grader_model)s, %(grader_rationale)s, %(suite_run_id)s
                 ) RETURNING *
                 """,
                 {
@@ -51,6 +55,11 @@ def create_run():
                     "score":             data.get("score"),
                     "error":             data.get("error", False),
                     "error_message":     data.get("error_message"),
+                    "pass_fail":         data.get("pass_fail"),
+                    "score":             data.get("score"),
+                    "grader_model":      data.get("grader_model"),
+                    "grader_rationale":  data.get("grader_rationale"),
+                    "suite_run_id":      data.get("suite_run_id"),
                 },
             )
             row = cur.fetchone()

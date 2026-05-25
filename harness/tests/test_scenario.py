@@ -31,6 +31,8 @@ def test_load_valid_model_scenario(tmp_path):
     assert s.difficulty == "easy"
     assert s.tags == ["smoke"]
     assert "hello world" in s.prompt
+    assert s.grading_criteria is None
+    assert s.suites == []
 
 
 def test_load_valid_agent_scenario(tmp_path):
@@ -138,3 +140,72 @@ def test_load_all_ignores_non_md(tmp_path):
 
 def test_load_all_empty_dir(tmp_path):
     assert load_all(tmp_path) == []
+
+
+# ── Grading criteria and suite fields ────────────────────────────────────────
+
+def test_load_grading_criteria(tmp_path):
+    p = write_scenario(tmp_path, "graded", """\
+        ---
+        name: graded
+        category: math
+        difficulty: easy
+        type: model
+        description: Graded scenario
+        tags: []
+        grading_criteria: The answer must be exactly 42.
+        ---
+        What is 6 times 7?
+    """)
+    s = Scenario.load(p)
+    assert s.grading_criteria == "The answer must be exactly 42."
+
+
+def test_load_single_suite(tmp_path):
+    p = write_scenario(tmp_path, "s", """\
+        ---
+        name: s
+        category: math
+        difficulty: easy
+        type: model
+        description: Suite test
+        tags: []
+        suite: math-exam
+        ---
+        Prompt.
+    """)
+    s = Scenario.load(p)
+    assert s.suites == ["math-exam"]
+
+
+def test_load_multiple_suites(tmp_path):
+    p = write_scenario(tmp_path, "m", """\
+        ---
+        name: m
+        category: math
+        difficulty: easy
+        type: model
+        description: Multi-suite test
+        tags: []
+        suite: [math-exam, algebra-basics]
+        ---
+        Prompt.
+    """)
+    s = Scenario.load(p)
+    assert s.suites == ["math-exam", "algebra-basics"]
+
+
+def test_load_no_suite_defaults_empty(tmp_path):
+    p = write_scenario(tmp_path, "nosuite", """\
+        ---
+        name: nosuite
+        category: misc
+        difficulty: easy
+        type: model
+        description: No suite
+        tags: []
+        ---
+        Prompt.
+    """)
+    s = Scenario.load(p)
+    assert s.suites == []

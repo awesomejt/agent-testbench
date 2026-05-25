@@ -69,11 +69,24 @@ def test_follow_up_prompts_default():
     assert r.follow_up_prompts == 0
 
 
+def test_grading_fields_default_none():
+    r = make_result()
+    assert r.pass_fail is None
+    assert r.score is None
+    assert r.grader_model is None
+    assert r.grader_rationale is None
+    assert r.suite_run_id is None
+    assert r.output_text == ""
+
+
 # ── run_model_scenario ────────────────────────────────────────────────────────
 
-def _mock_response(usage: dict, status: int = 200) -> MagicMock:
+def _mock_response(usage: dict, status: int = 200, content: str = "") -> MagicMock:
     resp = MagicMock()
-    resp.json.return_value = {"usage": usage}
+    resp.json.return_value = {
+        "usage": usage,
+        "choices": [{"message": {"content": content}}],
+    }
     resp.raise_for_status.return_value = None
     resp.status_code = status
     return resp
@@ -113,5 +126,15 @@ def test_run_model_scenario_timing(mock_post):
     result = run_model_scenario(make_scenario(), "gpt-4o", "openai", "http://localhost")
     assert result.total_time > 0
     assert result.end_time > result.start_time
+
+
+@patch("src.harness.runner.httpx.post")
+def test_run_model_scenario_captures_output_text(mock_post):
+    mock_post.return_value = _mock_response(
+        {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+        content="Hello, world!",
+    )
+    result = run_model_scenario(make_scenario(), "gpt-4o", "openai", "http://localhost")
+    assert result.output_text == "Hello, world!"
 
 

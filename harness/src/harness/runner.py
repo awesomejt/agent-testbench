@@ -30,8 +30,14 @@ class RunResult:
     total_tokens: int = 0
     cost_usd: float = 0.0
     follow_up_prompts: int = 0
+    output_text: str = ""
     error: bool = False
     error_message: str | None = None
+    pass_fail: str | None = None
+    score: float | None = None
+    grader_model: str | None = None
+    grader_rationale: str | None = None
+    suite_run_id: int | None = None
     events: list[dict] = field(default_factory=list)
 
     @property
@@ -93,6 +99,7 @@ def _run_opencode_turn(prompt: str, cwd: str, result: RunResult, session_id: str
     hard_deadline.start()
 
     tool_call_hashes: list[int] = []
+    text_parts: list[str] = []
 
     try:
         for line in proc.stdout:
@@ -105,6 +112,9 @@ def _run_opencode_turn(prompt: str, cwd: str, result: RunResult, session_id: str
 
             if not captured_session_id and event.get("sessionID"):
                 captured_session_id = event["sessionID"]
+
+            if event.get("type") == "text":
+                text_parts.append(event.get("part", {}).get("text", ""))
 
             if event.get("type") == "step_finish":
                 tokens = event.get("part", {}).get("tokens", {})
@@ -123,6 +133,8 @@ def _run_opencode_turn(prompt: str, cwd: str, result: RunResult, session_id: str
     finally:
         hard_deadline.cancel()
         proc.wait()
+
+    result.output_text = "\n".join(text_parts).strip()
 
     if proc.returncode not in (0, -9):
         raise RuntimeError(f"opencode exited with code {proc.returncode}")
@@ -157,6 +169,9 @@ def run_model_scenario(scenario: Scenario, model: str, provider: str,
         result.input_tokens = usage.get("prompt_tokens", 0)
         result.output_tokens = usage.get("completion_tokens", 0)
         result.total_tokens = usage.get("total_tokens", 0)
+        choices = data.get("choices", [])
+        if choices:
+            result.output_text = choices[0].get("message", {}).get("content", "")
     except Exception as exc:
         result.error = True
         result.error_message = str(exc)
