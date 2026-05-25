@@ -7,14 +7,19 @@ Agents should update this file after meaningful decisions, milestones, blockers,
 ## Current Status
 
 - Current phase: MVP
-- Last major milestone: Monorepo scaffolded, all tests passing (2026-05-25)
-- Next recommended task: Docker Compose stack, then wire CLI → API → DB end-to-end
+- Last major milestone: Docker Compose stack complete with Dockerfiles (2026-05-25)
+- Next recommended task: Wire CLI → API → DB end-to-end (real DB insert in POST /runs)
 - Current blocker: None
 
 ## Key Decisions
 
 - **CLI → API → DB** (not CLI → DB directly). The API is the single write path for run records, keeping schema migration in one place.
 - **uv** manages Python for api and harness — Python 3.14 baseline.
+- **CLI is Go** (Cobra + Viper), not Python. Compiles to a static binary (`make build-linux` → `cli/builds/testbench-linux-amd64`) for clean deployment to test VMs. `builds/` is gitignored.
+- **Root Makefile** delegates `test`, `build`, `lint`, `clean` across all modules. CLI has its own `cli/Makefile`.
+- **compose.yaml** (v2 syntax, no `version:` key) is the single local dev stack file. Services: traefik, db, api, web. Hostnames: `testbench.local` (web), `api.testbench.local` (api). Requires `/etc/hosts` entries on local dev machine.
+- **Web container** uses a two-stage Docker build: Vite builds React → Express (`server.js`) serves `dist/` with SPA catch-all. `VITE_API_URL` is a build arg so the API URL is baked in at image build time.
+- **Gunicorn** serves the Flask API inside Docker (2 workers). Flask dev server is for local `uv run flask run` only.
 - **npm** is the web package manager.
 - **Traefik** handles TLS for the web client in all environments (local dev included).
 - **Scenarios are Markdown files** with YAML front matter. The harness discovers them from the filesystem; adding a scenario requires no code change.
@@ -85,10 +90,25 @@ Token fields on `step_finish.part`: `tokens.input`, `tokens.output`, `tokens.rea
 
 Newest entries first.
 
-### 2026-05-25 — Claude Code (claude-sonnet-4-6)
+### 2026-05-25 — Claude Code (claude-sonnet-4-6) [run 3]
+
+- Task: Docker Compose stack + Dockerfiles
+- Files changed: compose.yaml, api/Dockerfile, web/Dockerfile, web/server.js, web/package.json (start script, @types/express), .env.example, MEMORY.md
+- Validation: compose.yaml syntax valid; Dockerfiles reviewed; web build chain confirmed (Vite → Express)
+- Result: Full local stack definable via `docker compose up`; Traefik TLS on testbench.local / api.testbench.local
+- Blockers or follow-up: Requires `/etc/hosts` entries for local dev; next step is wiring POST /runs to real DB insert
+
+### 2026-05-25 — Claude Code (claude-sonnet-4-6) [run 2]
+
+- Task: Monorepo scaffold — all six modules
+- Files changed: api/, cli/, harness/, web/, db/, scenarios/, Makefile, cli/Makefile, .gitignore
+- Validation: 6 tests passing (2 api, 2 harness, 2 cli); `make test` green; `make build-cli` produces cli/builds/testbench
+- Result: Full monorepo skeleton in place; CLI rewritten in Go (Cobra+Viper) for single-binary VM deployment
+
+### 2026-05-25 — Claude Code (claude-sonnet-4-6) [run 1]
 
 - Task: Initial documentation pass from project brief
 - Files changed: PROJECT_BRIEF.md, MEMORY.md, TODO.md, docs/Requirements.md, docs/Tech-Stack.md, docs/Architecture.md, docs/Implementation.md, CLAUDE.md
 - Validation: N/A (documentation only)
-- Result: Documentation complete; open questions identified
-- Blockers or follow-up: Scenario format, web package manager, metrics fields, AI agents in scope
+- Result: Documentation complete; all design decisions resolved
+- Blockers or follow-up: None

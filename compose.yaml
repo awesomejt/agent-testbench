@@ -1,0 +1,67 @@
+services:
+
+  traefik:
+    image: traefik:v3
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.http.address=:80
+      - --entrypoints.http.http.redirections.entrypoint.to=https
+      - --entrypoints.http.http.redirections.entrypoint.scheme=https
+      - --entrypoints.https.address=:443
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-testbench}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-testbench}
+      POSTGRES_DB: ${POSTGRES_DB:-testbench}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-testbench}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./api
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-testbench}:${POSTGRES_PASSWORD:-testbench}@db:5432/${POSTGRES_DB:-testbench}
+    depends_on:
+      db:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.api.rule=Host(`api.testbench.local`)
+      - traefik.http.routers.api.entrypoints=https
+      - traefik.http.routers.api.tls=true
+      - traefik.http.services.api.loadbalancer.server.port=5000
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://api.testbench.local}
+    depends_on:
+      - api
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.web.rule=Host(`testbench.local`)
+      - traefik.http.routers.web.entrypoints=https
+      - traefik.http.routers.web.tls=true
+      - traefik.http.services.web.loadbalancer.server.port=3000
+    restart: unless-stopped
+
+volumes:
+  db_data:
