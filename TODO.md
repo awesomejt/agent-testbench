@@ -1,69 +1,74 @@
 # Project TODO
 
 Task list for Agent Testbench, organized by ownership and project phase.
+Last updated: 2026-05-25
 
 ## Needs Attention
 
 Items here require Jason's input before agent work can continue.
 
-- [ ] **Harness invocation model** — Research how to drive OpenCode from a shell script for multi-turn scenarios, stall/timeout detection, and process restart on failure. Confirm the approach before implementing `harness/`. See open questions in `MEMORY.md`.
+- [ ] **pass_fail / score population** — Who or what determines whether a run passes or fails, and assigns a score? Options: human review via UI, automated assertion in the scenario file, or a post-run grader script. Needs a decision before the harness → CLI path is complete.
+- [ ] **AI provider credentials** — Confirm API keys for target providers (Anthropic, OpenAI, local) are available in the test VM environment and how they should be injected (env vars, secrets manager, `.env` file on the VM).
+- [ ] **Prod deployment** — When to promote to prod, and which VM / compose stack receives the prod images.
 
 ## Manual Validation
 
-- [ ] Confirm Docker Compose + Traefik TLS setup works on local dev machine
-- [ ] Validate deployment workflow to dev / stage / prod VMs
-- [ ] Confirm credentials and API keys for AI providers are available and not committed
+- [ ] Confirm Docker Compose + Traefik TLS works on local dev machine (requires `/etc/hosts` entries for `testbench.local` and `api.testbench.local`)
+- [ ] Validate `docker compose --profile test run --rm tests` integration test flow against a live stack
+- [ ] Confirm `deploy-prod` target and prod VM are ready before promoting
 
 ## AI Agent Work
 
-### Discovery
-
-- [x] **Research: OpenCode harness invocation** — Completed 2026-05-25. Findings in `MEMORY.md` → Harness Design.
-- [ ] Inventory existing source, tests, and configs once scaffolding begins
-
-### Planning
-
-- [x] Fill in `docs/Requirements.md`
-- [x] Fill in `docs/Tech-Stack.md`
-- [x] Fill in `docs/Architecture.md`
-- [x] Update `docs/Implementation.md` with implementation phases
-- [ ] Finalize DB schema (run record table, reference tables if needed)
-- [ ] Finalize API route design (POST /runs, GET /runs with filters)
-- [ ] Draft Docker Compose service definitions
-
 ### Implementation
 
-- [ ] Scaffold monorepo structure: `scenarios/`, `api/`, `web/`, `cli/`, `harness/`, `db/`
-- [ ] `db/` — initial schema and migration (run records table)
-- [ ] `api/` — Flask app skeleton + POST /runs endpoint
-- [ ] `cli/` — record a run result and post to API
-- [ ] `harness/` — run one scenario against one agent and invoke CLI
-- [ ] `web/` — React app skeleton + run list view
-- [ ] Docker Compose stack with api, web, db, Traefik
-- [ ] End-to-end smoke test: scenario → harness → CLI → API → DB → web
+- [ ] **Harness → CLI invocation** — After `run_agent_scenario` / `run_model_scenario` completes, serialize the `RunResult` and pipe it to `testbench record --data -` so results reach the API and DB. This is the last unconnected link in the data pipeline.
+- [ ] **Web: runs list view** — Replace the Vite default scaffold in `web/src/App.tsx` with a paginated table of runs fetched from `GET /runs/`. Columns: run name, scenario, model, provider, total time, tokens/sec, pass/fail, cost, date.
+- [ ] **Web: run detail view** — Clicking a row shows full run details including all token counts, error message if any, and raw event log.
+- [ ] **Web: filter controls** — Wire the `scenario`, `model`, `provider`, `from`, `to` query params from `GET /runs/` into the UI as filter inputs above the runs table.
+- [ ] **Harness batch runner** — A top-level entry point (CLI command or script) that iterates over all scenarios in `scenarios/` and runs each against a specified model, collecting results via the harness and recording each via the CLI.
+- [ ] **Local cost calculation** — Implement the `(watts × seconds / 3600) × rate_per_kwh` formula in the harness for `type: model` local runs. Rate defaults to `$0.14`; make it configurable via env var or flag.
+- [ ] **Fix `.coverage` files in git** — `api/.coverage` and `harness/.coverage` were accidentally committed. Remove from tracking (`git rm --cached`) and add to `.gitignore`.
 
 ### Tests And Quality
 
-- [ ] Add unit tests for API route logic
-- [ ] Add integration test for the CLI → API → DB path
-- [ ] Confirm lint, type check, and build pass for all modules
-- [ ] Review with `QUALITY_CHECKLIST.md`
+- [ ] **Integration test: CLI → API → DB** — Add an integration test (in `tests/integration/`) that posts a full run payload via the CLI binary and verifies it appears in `GET /runs/`.
+- [ ] **End-to-end smoke test** — Manual or scripted path: load a scenario → run harness → CLI records result → verify row in DB → verify it appears in the web UI.
+- [ ] **Web tests** — Add Vitest tests for the runs list and detail components once they exist.
+- [ ] **Lint and type-check pass** — Run `make lint` and confirm all modules clean; confirm `tsc -b` passes in `web/`.
 
 ### Documentation And Deployment
 
-- [ ] Document environment variables (DB URL, AI provider keys)
-- [ ] Document Docker Compose startup and teardown
-- [ ] Document dev / stage / prod deployment steps
-- [ ] Update `README.md` with setup and usage instructions
+- [ ] **README.md** — Add setup and usage instructions: prerequisites, `.env` setup, `docker compose up`, how to run a scenario, how to deploy.
+- [ ] **Environment variable reference** — Document all env vars (DB, API keys, Harbor, VITE_API_URL) either in `README.md` or a dedicated `docs/Environment.md`.
+- [ ] **Deployment runbook** — Document the full deploy workflow: `make deploy-dev`, validate on dev, promote to stage, then prod. Note the `/etc/hosts` or DNS entries required per environment.
+- [ ] **QUALITY_CHECKLIST.md review** — Walk through the checklist before tagging a first release.
 
 ## In Progress
 
-- [ ]
+_(nothing active right now)_
 
 ## Blocked
 
-- [ ]
+_(nothing blocked right now)_
 
 ## Done
 
 - [x] Initial project documentation (PROJECT_BRIEF.md, MEMORY.md, TODO.md, docs/, CLAUDE.md) — 2026-05-25
+- [x] Research: OpenCode harness invocation (multi-turn, stall/timeout, loop detection) — 2026-05-25
+- [x] Scaffold monorepo: `scenarios/`, `api/`, `web/`, `cli/`, `harness/`, `db/` — 2026-05-25
+- [x] `db/` — initial schema: `runs` table with 20 fields, 4 indexes — 2026-05-25
+- [x] `api/` — Flask app, `POST /runs/` (DB insert, RETURNING *), `GET /runs/` (5 query filters) — 2026-05-25
+- [x] `api/` — unit tests (16 tests, 98% coverage) — 2026-05-25
+- [x] `cli/` — Go CLI (Cobra + Viper), `record` command posts to API; builds to `cli/builds/` — 2026-05-25
+- [x] `cli/` — unit tests (5 tests, 86% coverage) — 2026-05-25
+- [x] `harness/` — `Scenario` loader, `run_agent_scenario` (OpenCode subprocess), `run_model_scenario` (httpx) — 2026-05-25
+- [x] `harness/` — unit tests (19 tests, 100% testable coverage) — 2026-05-25
+- [x] `web/` — React + Vite scaffold, Vitest + @testing-library setup — 2026-05-25
+- [x] Docker Compose stack: Traefik TLS, Postgres 18, api, web, integration test container — 2026-05-25
+- [x] Smoke tests (`tests/smoke/smoke.sh`, 5 curl checks) — 2026-05-25
+- [x] Integration tests (`tests/integration/`, httpx against live stack) — 2026-05-25
+- [x] Root Makefile: build, test, coverage, lint, deploy targets for all modules — 2026-05-25
+- [x] Harbor deploy: `deploy-dev`, `deploy-stage`, `deploy-prod` targets with git-SHA + latest tags — 2026-05-25
+- [x] Harbor TLS trust: CA certs installed system-wide and in Docker cert store — 2026-05-25
+- [x] Images pushed to `harbor.taylor.lan/dev` and `harbor.taylor.lan/stage` — 2026-05-25
+- [x] Example scenario: `scenarios/example-hello-world.md` — 2026-05-25
