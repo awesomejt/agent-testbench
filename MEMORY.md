@@ -6,10 +6,10 @@ Agents should update this file after meaningful decisions, milestones, blockers,
 
 ## Current Status
 
-- Current phase: Discovery
-- Last major milestone: Project documentation filled in (2026-05-25)
-- Next recommended task: Resolve open questions in `TODO.md` Needs Attention lane, then scaffold monorepo
-- Current blocker: Several design decisions need confirmation before scaffolding (see Blockers)
+- Current phase: MVP
+- Last major milestone: Monorepo scaffolded, all tests passing (2026-05-25)
+- Next recommended task: Docker Compose stack, then wire CLI → API → DB end-to-end
+- Current blocker: None
 
 ## Key Decisions
 

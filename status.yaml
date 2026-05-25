@@ -11,7 +11,7 @@
 #   working - agent is actively working on a task; other agents should skip
 
 status: active
-phase: ~
+phase: mvp
 reason: ~
 worker: ~
-updated: ~
+updated: 2026-05-25
