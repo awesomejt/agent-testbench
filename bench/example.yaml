@@ -1,0 +1,87 @@
+# llama-bench wrapper config
+# Usage: python bench/run.py bench/example.yaml
+# Usage: python bench/run.py bench/example.yaml --dry-run
+
+# Where to write results. {timestamp} is replaced at runtime.
+output: results/bench_{timestamp}.csv
+
+# Path to llama-bench binary (defaults to "llama-bench" on $PATH)
+# llama_bench: /home/user/llama.cpp/build/bin/llama-bench
+
+# Named model aliases — use the short name in runs instead of full paths.
+# Unknown values in runs pass through unchanged, so full paths still work.
+models:
+  llama3-8b:   /path/to/models/llama-3-8b-q4_k_m.gguf
+  llama3-70b:  /path/to/models/llama-3-70b-q4_k_m.gguf
+  mistral-7b:  /path/to/models/mistral-7b-q4_k_m.gguf
+
+# Defaults applied to every run (overridden per-run)
+defaults:
+  iterations: 5       # number of times each test is run for averaging (alias: repetitions)
+  n_gpu_layers: 99
+  batch_size: 2048
+  ubatch_size: 512
+  flash_attn: 0
+  mmap: 1
+
+runs:
+  # ── Baseline throughput sweep ───────────────────────────────────────────────
+  - name: throughput_baseline
+    model: llama3-8b
+    n_prompt: [128, 256, 512, 1024]
+    n_gen: [128]
+
+  # ── Flash attention on/off comparison ──────────────────────────────────────
+  - name: flash_attn_comparison
+    model: llama3-8b
+    n_prompt: 512
+    n_gen: 128
+    flash_attn: [0, 1]
+
+  # ── KV cache quantisation sweep ─────────────────────────────────────────────
+  - name: kv_cache_quant
+    model: llama3-8b
+    n_prompt: 512
+    n_gen: 128
+    cache_type_k: [f16, q8_0, q4_0]
+    cache_type_v: [f16, q8_0]
+    iterations: 3
+
+  # ── Multi-model comparison ───────────────────────────────────────────────────
+  - name: model_comparison
+    model:
+      - llama3-8b
+      - mistral-7b
+    n_prompt: [256, 512]
+    n_gen: 128
+
+  # ── Batch size scaling ──────────────────────────────────────────────────────
+  - name: batch_size_scaling
+    model: llama3-8b
+    n_prompt: 512
+    n_gen: 128
+    batch_size: [512, 1024, 2048, 4096]
+    ubatch_size: [512, 512, 512, 512]
+
+  # ── Multi-backend comparison (CUDA vs Vulkan vs CPU) ────────────────────────
+  # Requires a llama.cpp build with both CUDA and Vulkan enabled.
+  # Use --list-devices to see what device names your build exposes.
+  # - name: cuda_full
+  #   model: /path/to/model.gguf
+  #   device: CUDA0
+  #   n_gpu_layers: 99
+  #
+  # - name: vulkan_full
+  #   model: /path/to/model.gguf
+  #   device: Vulkan0
+  #   n_gpu_layers: 99
+  #
+  # - name: cpu_only
+  #   model: /path/to/model.gguf
+  #   n_gpu_layers: 0
+
+  # ── HuggingFace model (no local file needed) ────────────────────────────────
+  # - name: hf_model_test
+  #   hf_repo: ggml-org/Qwen2.5-7B-Instruct-GGUF:Q4_K_M
+  #   n_prompt: 512
+  #   n_gen: 128

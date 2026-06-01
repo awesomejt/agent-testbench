@@ -1,0 +1,78 @@
+output: results/bench_{timestamp}.csv
+llama_bench: /home/jason/llama.cpp/build/bin/llama-bench
+
+models:
+  gemma-4-31b: /shared/lmstudio/models/lmstudio-community/gemma-4-31B-it-GGUF/gemma-4-31B-it-Q4_K_M.gguf
+  glm-4.7-Flash: /shared/lmstudio/models/lmstudio-community/GLM-4.7-Flash-GGUF/GLM-4.7-Flash-Q4_K_M.gguf
+  gpt-oss-20b: /shared/lmstudio/models/unsloth/gpt-oss-20b-GGUF/gpt-oss-20b-Q4_K_S.gguf
+  gpt-oss-120b: /shared/lmstudio/models/unsloth/gpt-oss-120b-GGUF/gpt-oss-120b-Q4_K_S-00001-of-00002.gguf
+  hermes-4-70b: /shared/lmstudio/models/lmstudio-community/Hermes-4-70B-GGUF/Hermes-4-70B-Q4_K_M.gguf
+  qwen3.5-9b: /shared/lmstudio/models/lmstudio-community/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf
+  qwen3.5-9b-MTP: /shared/lmstudio/models/unsloth/Qwen3.5-9B-MTP-GGUF/Qwen3.5-9B-Q4_K_S.gguf
+  qwen3.6-27b: /shared/lmstudio/models/lmstudio-community/Qwen3.6-27B-GGUF/Qwen3.6-27B-Q4_K_M.gguf
+  qwen3.6-35b-A3B: /shared/lmstudio/models/lmstudio-community/Qwen3.6-35B-A3B-GGUF/Qwen3.6-35B-A3B-Q4_K_M.gguf
+  qwen3.6-35b-A3B-MTP: /shared/lmstudio/models/unsloth/Qwen3.6-35B-A3B-MTP-GGUF/Qwen3.6-35B-A3B-UD-Q4_K_S.gguf
+  qwen3-Coder-Next: /shared/lmstudio/models/lmstudio-community/Qwen3-Coder-Next-GGUF/Qwen3-Coder-Next-Q4_K_M.gguf
+
+defaults:
+  iterations: 5       # number of times each test is run for averaging (alias: repetitions)
+  n_gpu_layers: 99
+  batch_size: 2048
+  ubatch_size: 512
+  flash_attn: 0
+  mmap: 1
+
+runs:
+  - name: "CPU Baseline"
+    model: 
+      - gemma-4-31b
+      - glm-4.7-Flash
+      - gpt-oss-20b
+      - gpt-oss-120b
+      - hermes-4-70b
+      - qwen3.5-9b
+      - qwen3.5-9b-MTP
+      - qwen3.6-27b
+      - qwen3.6-35b-A3B
+      - qwen3.6-35b-A3B-MTP
+      - qwen3-Coder-Next
+    device: none
+    n_prompt: [128, 256, 512, 1k, 2k, 4k, 8k, 16k]
+    n_gen: [128]
+    n_gpu_layers: 0
+
+  - name: "CUDA Baseline"
+    model: 
+      - gemma-4-31b
+      - glm-4.7-Flash
+      - gpt-oss-20b
+      - gpt-oss-120b
+      - hermes-4-70b
+      - qwen3.5-9b
+      - qwen3.5-9b-MTP
+      - qwen3.6-27b
+      - qwen3.6-35b-A3B
+      - qwen3.6-35b-A3B-MTP
+      - qwen3-Coder-Next
+    device: CUDA0
+    n_prompt: [128, 256, 512, 1k, 2k, 4k, 8k, 16k]
+    n_gen: [128]
+    n_gpu_layers: 99
+
+  - name: "Vulkan Baseline"
+    model: 
+      - gemma-4-31b
+      - glm-4.7-Flash
+      - gpt-oss-20b
+      - gpt-oss-120b
+      - hermes-4-70b
+      - qwen3.5-9b
+      - qwen3.5-9b-MTP
+      - qwen3.6-27b
+      - qwen3.6-35b-A3B
+      - qwen3.6-35b-A3B-MTP
+      - qwen3-Coder-Next
+    device: Vulkan0
+    n_prompt: [128, 256, 512, 1k, 2k, 4k, 8k, 16k]
+    n_gen: [128]
+    n_gpu_layers: 99
